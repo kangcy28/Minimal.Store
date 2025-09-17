@@ -283,4 +283,63 @@ public class ProductsControllerTests : TestBase
         // Assert
         result.Should().BeOfType<NotFoundResult>();
     }
+
+    [Fact]
+    public async Task DeleteProduct_WithValidId_ShouldReturn204()
+    {
+        // Arrange
+        var productRepository = new ProductRepository(Context);
+        var productService = new ProductService(productRepository);
+        var controller = new ProductsController(productService);
+
+        // 先新增測試分類
+        var category = new Category
+        {
+            Name = "Electronics",
+            Description = "Electronic products",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Categories.Add(category);
+        await Context.SaveChangesAsync();
+
+        // 新增測試商品
+        var product = new Product
+        {
+            Name = "iPhone 15",
+            Description = "Latest iPhone model",
+            Price = 999.99m,
+            Stock = 100,
+            CategoryId = category.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Products.Add(product);
+        await Context.SaveChangesAsync();
+
+        // Act
+        var result = await controller.Delete(product.Id);
+
+        // Assert
+        result.Should().BeOfType<NoContentResult>();
+
+        // 驗證商品已被刪除
+        var deletedProduct = await Context.Products.FindAsync(product.Id);
+        deletedProduct.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task DeleteProduct_WithInvalidId_ShouldReturn404()
+    {
+        // Arrange
+        var productRepository = new ProductRepository(Context);
+        var productService = new ProductService(productRepository);
+        var controller = new ProductsController(productService);
+
+        // Act
+        var result = await controller.Delete(999); // 不存在的ID
+
+        // Assert
+        result.Should().BeOfType<NotFoundResult>();
+    }
 }
