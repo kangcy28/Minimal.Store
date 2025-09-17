@@ -176,4 +176,50 @@ public class CategoriesControllerTests : TestBase
         // Assert
         result.Should().BeOfType<NotFoundResult>();
     }
+
+    [Fact]
+    public async Task DeleteCategory_WithValidId_ShouldReturn204()
+    {
+        // Arrange
+        var categoryRepository = new CategoryRepository(Context);
+        var categoryService = new CategoryService(categoryRepository);
+        var controller = new CategoriesController(categoryService);
+
+        // 先新增測試資料
+        var category = new Category
+        {
+            Name = "Test Category",
+            Description = "Test Description",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Categories.Add(category);
+        await Context.SaveChangesAsync();
+
+        // Act
+        var result = await controller.Delete(category.Id);
+
+        // Assert
+        var noContentResult = result.Should().BeOfType<NoContentResult>().Subject;
+        noContentResult.StatusCode.Should().Be(204);
+
+        // 驗證資料已被刪除
+        var deletedCategory = await Context.Categories.FindAsync(category.Id);
+        deletedCategory.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task DeleteCategory_WithInvalidId_ShouldReturnNotFound()
+    {
+        // Arrange
+        var categoryRepository = new CategoryRepository(Context);
+        var categoryService = new CategoryService(categoryRepository);
+        var controller = new CategoriesController(categoryService);
+
+        // Act
+        var result = await controller.Delete(999);
+
+        // Assert
+        result.Should().BeOfType<NotFoundResult>();
+    }
 }
