@@ -13,6 +13,13 @@ public class ProductRepository : IProductRepository
         _context = context;
     }
 
+    public async Task<List<Product>> GetAllAsync()
+    {
+        return await _context.Products
+            .Include(p => p.Category)
+            .ToListAsync();
+    }
+
     public async Task<Product> CreateAsync(Product product)
     {
         _context.Products.Add(product);
