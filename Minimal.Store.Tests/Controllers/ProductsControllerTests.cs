@@ -192,4 +192,95 @@ public class ProductsControllerTests : TestBase
         // Assert
         result.Should().BeOfType<NotFoundResult>();
     }
+
+    [Fact]
+    public async Task UpdateProduct_WithValidData_ShouldReturnUpdatedProductWithCategoryInformation()
+    {
+        // Arrange
+        var productRepository = new ProductRepository(Context);
+        var productService = new ProductService(productRepository);
+        var controller = new ProductsController(productService);
+
+        // 先新增測試分類
+        var category1 = new Category
+        {
+            Name = "Electronics",
+            Description = "Electronic products",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var category2 = new Category
+        {
+            Name = "Clothing",
+            Description = "Fashion items",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Categories.AddRange(category1, category2);
+        await Context.SaveChangesAsync();
+
+        // 新增測試商品
+        var product = new Product
+        {
+            Name = "iPhone 15",
+            Description = "Latest iPhone model",
+            Price = 999.99m,
+            Stock = 100,
+            CategoryId = category1.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Products.Add(product);
+        await Context.SaveChangesAsync();
+
+        var updateProductDto = new UpdateProductDto
+        {
+            Name = "iPhone 15 Pro",
+            Description = "Latest iPhone Pro model with enhanced features",
+            Price = 1099.99m,
+            Stock = 80,
+            CategoryId = category2.Id // 變更分類
+        };
+
+        // Act
+        var result = await controller.Update(product.Id, updateProductDto);
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.StatusCode.Should().Be(200);
+
+        var updatedProduct = okResult.Value.Should().BeOfType<ProductDto>().Subject;
+        updatedProduct.Id.Should().Be(product.Id);
+        updatedProduct.Name.Should().Be("iPhone 15 Pro");
+        updatedProduct.Description.Should().Be("Latest iPhone Pro model with enhanced features");
+        updatedProduct.Price.Should().Be(1099.99m);
+        updatedProduct.Stock.Should().Be(80);
+        updatedProduct.CategoryId.Should().Be(category2.Id);
+        updatedProduct.CategoryName.Should().Be("Clothing");
+        updatedProduct.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public async Task UpdateProduct_WithInvalidId_ShouldReturn404()
+    {
+        // Arrange
+        var productRepository = new ProductRepository(Context);
+        var productService = new ProductService(productRepository);
+        var controller = new ProductsController(productService);
+
+        var updateProductDto = new UpdateProductDto
+        {
+            Name = "Updated Product",
+            Description = "Updated description",
+            Price = 100.00m,
+            Stock = 50,
+            CategoryId = 1
+        };
+
+        // Act
+        var result = await controller.Update(999, updateProductDto); // 不存在的ID
+
+        // Assert
+        result.Should().BeOfType<NotFoundResult>();
+    }
 }

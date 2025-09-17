@@ -51,6 +51,36 @@ public class ProductService : IProductService
         };
     }
 
+    public async Task<ProductDto?> UpdateAsync(int id, UpdateProductDto dto)
+    {
+        var product = new Product
+        {
+            Id = id,
+            Name = dto.Name,
+            Description = dto.Description,
+            Price = dto.Price,
+            Stock = dto.Stock,
+            CategoryId = dto.CategoryId
+        };
+
+        var updatedProduct = await _productRepository.UpdateAsync(product);
+
+        if (updatedProduct == null)
+            return null;
+
+        return new ProductDto
+        {
+            Id = updatedProduct.Id,
+            Name = updatedProduct.Name,
+            Description = updatedProduct.Description,
+            Price = updatedProduct.Price,
+            Stock = updatedProduct.Stock,
+            CategoryId = updatedProduct.CategoryId,
+            CategoryName = updatedProduct.Category?.Name ?? string.Empty,
+            CreatedAt = updatedProduct.CreatedAt
+        };
+    }
+
     public async Task<ProductDto> CreateAsync(CreateProductDto dto)
     {
         var product = new Product
