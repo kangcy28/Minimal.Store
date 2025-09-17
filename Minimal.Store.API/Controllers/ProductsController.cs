@@ -1,0 +1,24 @@
+using Microsoft.AspNetCore.Mvc;
+using Minimal.Store.API.Models.DTOs;
+using Minimal.Store.API.Services.Interfaces;
+
+namespace Minimal.Store.API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class ProductsController : ControllerBase
+{
+    private readonly IProductService _productService;
+
+    public ProductsController(IProductService productService)
+    {
+        _productService = productService;
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create(CreateProductDto dto)
+    {
+        var productDto = await _productService.CreateAsync(dto);
+        return CreatedAtAction("GetById", new { id = productDto.Id }, productDto);
+    }
+}
