@@ -27,6 +27,29 @@ public class ProductRepository : IProductRepository
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
+    public async Task<Product?> UpdateAsync(Product product)
+    {
+        var existingProduct = await _context.Products.FindAsync(product.Id);
+
+        if (existingProduct == null)
+            return null;
+
+        existingProduct.Name = product.Name;
+        existingProduct.Description = product.Description;
+        existingProduct.Price = product.Price;
+        existingProduct.Stock = product.Stock;
+        existingProduct.CategoryId = product.CategoryId;
+
+        await _context.SaveChangesAsync();
+
+        // 載入關聯的 Category 資料
+        await _context.Entry(existingProduct)
+            .Reference(p => p.Category)
+            .LoadAsync();
+
+        return existingProduct;
+    }
+
     public async Task<Product> CreateAsync(Product product)
     {
         _context.Products.Add(product);

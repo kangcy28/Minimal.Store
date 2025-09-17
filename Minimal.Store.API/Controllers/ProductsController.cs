@@ -33,6 +33,17 @@ public class ProductsController : ControllerBase
         return Ok(product);
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, UpdateProductDto dto)
+    {
+        var updatedProduct = await _productService.UpdateAsync(id, dto);
+
+        if (updatedProduct == null)
+            return NotFound();
+
+        return Ok(updatedProduct);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(CreateProductDto dto)
     {
