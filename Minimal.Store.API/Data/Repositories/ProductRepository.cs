@@ -20,6 +20,13 @@ public class ProductRepository : IProductRepository
             .ToListAsync();
     }
 
+    public async Task<Product?> GetByIdAsync(int id)
+    {
+        return await _context.Products
+            .Include(p => p.Category)
+            .FirstOrDefaultAsync(p => p.Id == id);
+    }
+
     public async Task<Product> CreateAsync(Product product)
     {
         _context.Products.Add(product);

@@ -31,6 +31,26 @@ public class ProductService : IProductService
         }).ToList();
     }
 
+    public async Task<ProductDto?> GetByIdAsync(int id)
+    {
+        var product = await _productRepository.GetByIdAsync(id);
+
+        if (product == null)
+            return null;
+
+        return new ProductDto
+        {
+            Id = product.Id,
+            Name = product.Name,
+            Description = product.Description,
+            Price = product.Price,
+            Stock = product.Stock,
+            CategoryId = product.CategoryId,
+            CategoryName = product.Category?.Name ?? string.Empty,
+            CreatedAt = product.CreatedAt
+        };
+    }
+
     public async Task<ProductDto> CreateAsync(CreateProductDto dto)
     {
         var product = new Product

@@ -126,4 +126,70 @@ public class ProductsControllerTests : TestBase
         secondProduct.CategoryId.Should().Be(category2.Id);
         secondProduct.CategoryName.Should().Be("Clothing");
     }
+
+    [Fact]
+    public async Task GetProductById_WithValidId_ShouldReturnProductWithCategoryInformation()
+    {
+        // Arrange
+        var productRepository = new ProductRepository(Context);
+        var productService = new ProductService(productRepository);
+        var controller = new ProductsController(productService);
+
+        // 先新增測試分類
+        var category = new Category
+        {
+            Name = "Electronics",
+            Description = "Electronic products",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Categories.Add(category);
+        await Context.SaveChangesAsync();
+
+        // 新增測試商品
+        var product = new Product
+        {
+            Name = "iPhone 15",
+            Description = "Latest iPhone model",
+            Price = 999.99m,
+            Stock = 100,
+            CategoryId = category.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Products.Add(product);
+        await Context.SaveChangesAsync();
+
+        // Act
+        var result = await controller.GetById(product.Id);
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.StatusCode.Should().Be(200);
+
+        var returnedProduct = okResult.Value.Should().BeOfType<ProductDto>().Subject;
+        returnedProduct.Id.Should().Be(product.Id);
+        returnedProduct.Name.Should().Be("iPhone 15");
+        returnedProduct.Description.Should().Be("Latest iPhone model");
+        returnedProduct.Price.Should().Be(999.99m);
+        returnedProduct.Stock.Should().Be(100);
+        returnedProduct.CategoryId.Should().Be(category.Id);
+        returnedProduct.CategoryName.Should().Be("Electronics");
+        returnedProduct.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public async Task GetProductById_WithInvalidId_ShouldReturn404()
+    {
+        // Arrange
+        var productRepository = new ProductRepository(Context);
+        var productService = new ProductService(productRepository);
+        var controller = new ProductsController(productService);
+
+        // Act
+        var result = await controller.GetById(999); // 不存在的ID
+
+        // Assert
+        result.Should().BeOfType<NotFoundResult>();
+    }
 }
