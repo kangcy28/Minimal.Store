@@ -44,6 +44,17 @@ public class ProductsController : ControllerBase
         return Ok(updatedProduct);
     }
 
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var result = await _productService.DeleteAsync(id);
+
+        if (!result)
+            return NotFound();
+
+        return NoContent();
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(CreateProductDto dto)
     {

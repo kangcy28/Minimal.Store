@@ -81,6 +81,11 @@ public class ProductService : IProductService
         };
     }
 
+    public async Task<bool> DeleteAsync(int id)
+    {
+        return await _productRepository.DeleteAsync(id);
+    }
+
     public async Task<ProductDto> CreateAsync(CreateProductDto dto)
     {
         var product = new Product
