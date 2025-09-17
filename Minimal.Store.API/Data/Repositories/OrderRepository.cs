@@ -1,0 +1,30 @@
+using Microsoft.EntityFrameworkCore;
+using Minimal.Store.API.Data.Context;
+using Minimal.Store.API.Models.Entities;
+
+namespace Minimal.Store.API.Data.Repositories;
+
+public class OrderRepository : IOrderRepository
+{
+    private readonly StoreDbContext _context;
+
+    public OrderRepository(StoreDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<Order> CreateAsync(Order order)
+    {
+        _context.Orders.Add(order);
+        await _context.SaveChangesAsync();
+
+        // 載入關聯的資料
+        await _context.Entry(order)
+            .Collection(o => o.OrderItems)
+            .Query()
+            .Include(oi => oi.Product)
+            .LoadAsync();
+
+        return order;
+    }
+}
