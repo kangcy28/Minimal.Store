@@ -1,7 +1,9 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Minimal.Store.API.Controllers;
+using Minimal.Store.API.Data.Repositories;
 using Minimal.Store.API.Models.DTOs;
+using Minimal.Store.API.Models.Entities;
 using Minimal.Store.API.Services.Implementations;
 
 namespace Minimal.Store.Tests.Controllers;
@@ -12,7 +14,8 @@ public class CategoriesControllerTests : TestBase
     public async Task CreateCategory_WithValidData_ShouldReturn201()
     {
         // Arrange
-        var categoryService = new CategoryService(Context);
+        var categoryRepository = new CategoryRepository(Context);
+        var categoryService = new CategoryService(categoryRepository);
         var controller = new CategoriesController(categoryService);
         var createCategoryDto = new CreateCategoryDto
         {
@@ -32,5 +35,37 @@ public class CategoriesControllerTests : TestBase
         createdCategory.Name.Should().Be("Electronics");
         createdCategory.Description.Should().Be("Electronic products and gadgets");
         createdCategory.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public async Task GetAllCategories_ShouldReturnCategoryList()
+    {
+        // Arrange
+        var categoryRepository = new CategoryRepository(Context);
+        var categoryService = new CategoryService(categoryRepository);
+        var controller = new CategoriesController(categoryService);
+
+        // 先新增一些測試資料
+        var category1 = new Category { Name = "Electronics", Description = "Electronic products", CreatedAt = DateTime.UtcNow };
+        var category2 = new Category { Name = "Books", Description = "Books and literature", CreatedAt = DateTime.UtcNow };
+
+        Context.Categories.AddRange(category1, category2);
+        await Context.SaveChangesAsync();
+
+        // Act
+        var result = await controller.GetAll();
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.StatusCode.Should().Be(200);
+
+        var categories = okResult.Value.Should().BeAssignableTo<IEnumerable<CategoryDto>>().Subject;
+        categories.Should().HaveCount(2);
+
+        var categoriesList = categories.ToList();
+        categoriesList[0].Name.Should().Be("Electronics");
+        categoriesList[0].Description.Should().Be("Electronic products");
+        categoriesList[1].Name.Should().Be("Books");
+        categoriesList[1].Description.Should().Be("Books and literature");
     }
 }

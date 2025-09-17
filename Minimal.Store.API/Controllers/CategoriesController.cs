@@ -21,4 +21,11 @@ public class CategoriesController : ControllerBase
         var categoryDto = await _categoryService.CreateAsync(dto);
         return CreatedAtAction("GetById", new { id = categoryDto.Id }, categoryDto);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var categories = await _categoryService.GetAllAsync();
+        return Ok(categories);
+    }
 }
