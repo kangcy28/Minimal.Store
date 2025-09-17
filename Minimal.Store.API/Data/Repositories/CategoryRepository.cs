@@ -29,4 +29,18 @@ public class CategoryRepository : ICategoryRepository
     {
         return await _context.Categories.FindAsync(id);
     }
+
+    public async Task<Category?> UpdateAsync(Category category)
+    {
+        var existingCategory = await _context.Categories.FindAsync(category.Id);
+
+        if (existingCategory == null)
+            return null;
+
+        existingCategory.Name = category.Name;
+        existingCategory.Description = category.Description;
+
+        await _context.SaveChangesAsync();
+        return existingCategory;
+    }
 }

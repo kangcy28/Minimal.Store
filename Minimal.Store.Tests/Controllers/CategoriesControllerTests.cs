@@ -116,4 +116,64 @@ public class CategoriesControllerTests : TestBase
         // Assert
         result.Should().BeOfType<NotFoundResult>();
     }
+
+    [Fact]
+    public async Task UpdateCategory_WithValidData_ShouldReturn200()
+    {
+        // Arrange
+        var categoryRepository = new CategoryRepository(Context);
+        var categoryService = new CategoryService(categoryRepository);
+        var controller = new CategoriesController(categoryService);
+
+        // 先新增測試資料
+        var category = new Category
+        {
+            Name = "Original Name",
+            Description = "Original Description",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Categories.Add(category);
+        await Context.SaveChangesAsync();
+
+        var updateCategoryDto = new UpdateCategoryDto
+        {
+            Name = "Updated Electronics",
+            Description = "Updated electronic products and gadgets"
+        };
+
+        // Act
+        var result = await controller.Update(category.Id, updateCategoryDto);
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.StatusCode.Should().Be(200);
+
+        var updatedCategory = okResult.Value.Should().BeOfType<CategoryDto>().Subject;
+        updatedCategory.Id.Should().Be(category.Id);
+        updatedCategory.Name.Should().Be("Updated Electronics");
+        updatedCategory.Description.Should().Be("Updated electronic products and gadgets");
+        updatedCategory.CreatedAt.Should().BeCloseTo(category.CreatedAt, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public async Task UpdateCategory_WithInvalidId_ShouldReturnNotFound()
+    {
+        // Arrange
+        var categoryRepository = new CategoryRepository(Context);
+        var categoryService = new CategoryService(categoryRepository);
+        var controller = new CategoriesController(categoryService);
+
+        var updateCategoryDto = new UpdateCategoryDto
+        {
+            Name = "Updated Name",
+            Description = "Updated Description"
+        };
+
+        // Act
+        var result = await controller.Update(999, updateCategoryDto);
+
+        // Assert
+        result.Should().BeOfType<NotFoundResult>();
+    }
 }

@@ -62,4 +62,27 @@ public class CategoryService : ICategoryService
             CreatedAt = category.CreatedAt
         };
     }
+
+    public async Task<CategoryDto?> UpdateAsync(int id, UpdateCategoryDto dto)
+    {
+        var category = new Category
+        {
+            Id = id,
+            Name = dto.Name,
+            Description = dto.Description
+        };
+
+        var updatedCategory = await _categoryRepository.UpdateAsync(category);
+
+        if (updatedCategory == null)
+            return null;
+
+        return new CategoryDto
+        {
+            Id = updatedCategory.Id,
+            Name = updatedCategory.Name,
+            Description = updatedCategory.Description,
+            CreatedAt = updatedCategory.CreatedAt
+        };
+    }
 }
