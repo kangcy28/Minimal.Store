@@ -5,5 +5,6 @@ namespace Minimal.Store.API.Services.Interfaces;
 public interface IProductService
 {
     Task<List<ProductDto>> GetAllAsync();
+    Task<ProductDto?> GetByIdAsync(int id);
     Task<ProductDto> CreateAsync(CreateProductDto dto);
 }
