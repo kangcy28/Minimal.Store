@@ -14,6 +14,23 @@ public class ProductService : IProductService
         _productRepository = productRepository;
     }
 
+    public async Task<List<ProductDto>> GetAllAsync()
+    {
+        var products = await _productRepository.GetAllAsync();
+
+        return products.Select(product => new ProductDto
+        {
+            Id = product.Id,
+            Name = product.Name,
+            Description = product.Description,
+            Price = product.Price,
+            Stock = product.Stock,
+            CategoryId = product.CategoryId,
+            CategoryName = product.Category?.Name ?? string.Empty,
+            CreatedAt = product.CreatedAt
+        }).ToList();
+    }
+
     public async Task<ProductDto> CreateAsync(CreateProductDto dto)
     {
         var product = new Product

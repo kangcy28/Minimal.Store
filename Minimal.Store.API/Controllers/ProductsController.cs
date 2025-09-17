@@ -15,6 +15,13 @@ public class ProductsController : ControllerBase
         _productService = productService;
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var products = await _productService.GetAllAsync();
+        return Ok(products);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(CreateProductDto dto)
     {
