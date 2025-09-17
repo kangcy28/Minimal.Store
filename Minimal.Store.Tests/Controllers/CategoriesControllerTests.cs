@@ -68,4 +68,52 @@ public class CategoriesControllerTests : TestBase
         categoriesList[1].Name.Should().Be("Books");
         categoriesList[1].Description.Should().Be("Books and literature");
     }
+
+    [Fact]
+    public async Task GetCategoryById_WithValidId_ShouldReturnCategory()
+    {
+        // Arrange
+        var categoryRepository = new CategoryRepository(Context);
+        var categoryService = new CategoryService(categoryRepository);
+        var controller = new CategoriesController(categoryService);
+
+        // 先新增測試資料
+        var category = new Category
+        {
+            Name = "Electronics",
+            Description = "Electronic products",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Categories.Add(category);
+        await Context.SaveChangesAsync();
+
+        // Act
+        var result = await controller.GetById(category.Id);
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.StatusCode.Should().Be(200);
+
+        var returnedCategory = okResult.Value.Should().BeOfType<CategoryDto>().Subject;
+        returnedCategory.Id.Should().Be(category.Id);
+        returnedCategory.Name.Should().Be("Electronics");
+        returnedCategory.Description.Should().Be("Electronic products");
+        returnedCategory.CreatedAt.Should().BeCloseTo(category.CreatedAt, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public async Task GetCategoryById_WithInvalidId_ShouldReturnNotFound()
+    {
+        // Arrange
+        var categoryRepository = new CategoryRepository(Context);
+        var categoryService = new CategoryService(categoryRepository);
+        var controller = new CategoriesController(categoryService);
+
+        // Act
+        var result = await controller.GetById(999);
+
+        // Assert
+        result.Should().BeOfType<NotFoundResult>();
+    }
 }

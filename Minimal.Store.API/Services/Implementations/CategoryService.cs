@@ -46,4 +46,20 @@ public class CategoryService : ICategoryService
             CreatedAt = c.CreatedAt
         });
     }
+
+    public async Task<CategoryDto?> GetByIdAsync(int id)
+    {
+        var category = await _categoryRepository.GetByIdAsync(id);
+
+        if (category == null)
+            return null;
+
+        return new CategoryDto
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Description = category.Description,
+            CreatedAt = category.CreatedAt
+        };
+    }
 }

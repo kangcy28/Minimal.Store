@@ -28,4 +28,15 @@ public class CategoriesController : ControllerBase
         var categories = await _categoryService.GetAllAsync();
         return Ok(categories);
     }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var category = await _categoryService.GetByIdAsync(id);
+
+        if (category == null)
+            return NotFound();
+
+        return Ok(category);
+    }
 }
