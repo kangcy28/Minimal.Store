@@ -1,4 +1,4 @@
-using Minimal.Store.API.Data.Context;
+using Minimal.Store.API.Data.Repositories;
 using Minimal.Store.API.Models.DTOs;
 using Minimal.Store.API.Models.Entities;
 using Minimal.Store.API.Services.Interfaces;
@@ -7,11 +7,11 @@ namespace Minimal.Store.API.Services.Implementations;
 
 public class CategoryService : ICategoryService
 {
-    private readonly StoreDbContext _context;
+    private readonly ICategoryRepository _categoryRepository;
 
-    public CategoryService(StoreDbContext context)
+    public CategoryService(ICategoryRepository categoryRepository)
     {
-        _context = context;
+        _categoryRepository = categoryRepository;
     }
 
     public async Task<CategoryDto> CreateAsync(CreateCategoryDto dto)
@@ -23,15 +23,27 @@ public class CategoryService : ICategoryService
             CreatedAt = DateTime.UtcNow
         };
 
-        _context.Categories.Add(category);
-        await _context.SaveChangesAsync();
+        var createdCategory = await _categoryRepository.CreateAsync(category);
 
         return new CategoryDto
         {
-            Id = category.Id,
-            Name = category.Name,
-            Description = category.Description,
-            CreatedAt = category.CreatedAt
+            Id = createdCategory.Id,
+            Name = createdCategory.Name,
+            Description = createdCategory.Description,
+            CreatedAt = createdCategory.CreatedAt
         };
+    }
+
+    public async Task<IEnumerable<CategoryDto>> GetAllAsync()
+    {
+        var categories = await _categoryRepository.GetAllAsync();
+
+        return categories.Select(c => new CategoryDto
+        {
+            Id = c.Id,
+            Name = c.Name,
+            Description = c.Description,
+            CreatedAt = c.CreatedAt
+        });
     }
 }
