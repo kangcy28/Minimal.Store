@@ -74,4 +74,9 @@ public class ProductRepository : IProductRepository
 
         return product;
     }
+
+    public async Task<bool> HasProductsInCategoryAsync(int categoryId)
+    {
+        return await _context.Products.AnyAsync(p => p.CategoryId == categoryId);
+    }
 }

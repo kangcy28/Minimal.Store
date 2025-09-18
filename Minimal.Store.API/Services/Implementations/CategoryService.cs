@@ -8,10 +8,12 @@ namespace Minimal.Store.API.Services.Implementations;
 public class CategoryService : ICategoryService
 {
     private readonly ICategoryRepository _categoryRepository;
+    private readonly IProductRepository _productRepository;
 
-    public CategoryService(ICategoryRepository categoryRepository)
+    public CategoryService(ICategoryRepository categoryRepository, IProductRepository productRepository)
     {
         _categoryRepository = categoryRepository;
+        _productRepository = productRepository;
     }
 
     public async Task<CategoryDto> CreateAsync(CreateCategoryDto dto)
@@ -88,6 +90,18 @@ public class CategoryService : ICategoryService
 
     public async Task<bool> DeleteAsync(int id)
     {
+        // 檢查分類是否存在
+        var category = await _categoryRepository.GetByIdAsync(id);
+        if (category == null)
+            return false;
+
+        // 檢查是否有商品使用此分類
+        var hasProducts = await _productRepository.HasProductsInCategoryAsync(id);
+        if (hasProducts)
+        {
+            throw new InvalidOperationException($"Cannot delete category '{category.Name}' because products exist in this category.");
+        }
+
         return await _categoryRepository.DeleteAsync(id);
     }
 }

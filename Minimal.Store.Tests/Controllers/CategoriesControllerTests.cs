@@ -15,7 +15,8 @@ public class CategoriesControllerTests : TestBase
     {
         // Arrange
         var categoryRepository = new CategoryRepository(Context);
-        var categoryService = new CategoryService(categoryRepository);
+        var productRepository = new ProductRepository(Context);
+        var categoryService = new CategoryService(categoryRepository, productRepository);
         var controller = new CategoriesController(categoryService);
         var createCategoryDto = new CreateCategoryDto
         {
@@ -42,7 +43,8 @@ public class CategoriesControllerTests : TestBase
     {
         // Arrange
         var categoryRepository = new CategoryRepository(Context);
-        var categoryService = new CategoryService(categoryRepository);
+        var productRepository = new ProductRepository(Context);
+        var categoryService = new CategoryService(categoryRepository, productRepository);
         var controller = new CategoriesController(categoryService);
 
         // 先新增一些測試資料
@@ -74,7 +76,8 @@ public class CategoriesControllerTests : TestBase
     {
         // Arrange
         var categoryRepository = new CategoryRepository(Context);
-        var categoryService = new CategoryService(categoryRepository);
+        var productRepository = new ProductRepository(Context);
+        var categoryService = new CategoryService(categoryRepository, productRepository);
         var controller = new CategoriesController(categoryService);
 
         // 先新增測試資料
@@ -107,7 +110,8 @@ public class CategoriesControllerTests : TestBase
     {
         // Arrange
         var categoryRepository = new CategoryRepository(Context);
-        var categoryService = new CategoryService(categoryRepository);
+        var productRepository = new ProductRepository(Context);
+        var categoryService = new CategoryService(categoryRepository, productRepository);
         var controller = new CategoriesController(categoryService);
 
         // Act
@@ -122,7 +126,8 @@ public class CategoriesControllerTests : TestBase
     {
         // Arrange
         var categoryRepository = new CategoryRepository(Context);
-        var categoryService = new CategoryService(categoryRepository);
+        var productRepository = new ProductRepository(Context);
+        var categoryService = new CategoryService(categoryRepository, productRepository);
         var controller = new CategoriesController(categoryService);
 
         // 先新增測試資料
@@ -161,7 +166,8 @@ public class CategoriesControllerTests : TestBase
     {
         // Arrange
         var categoryRepository = new CategoryRepository(Context);
-        var categoryService = new CategoryService(categoryRepository);
+        var productRepository = new ProductRepository(Context);
+        var categoryService = new CategoryService(categoryRepository, productRepository);
         var controller = new CategoriesController(categoryService);
 
         var updateCategoryDto = new UpdateCategoryDto
@@ -182,7 +188,8 @@ public class CategoriesControllerTests : TestBase
     {
         // Arrange
         var categoryRepository = new CategoryRepository(Context);
-        var categoryService = new CategoryService(categoryRepository);
+        var productRepository = new ProductRepository(Context);
+        var categoryService = new CategoryService(categoryRepository, productRepository);
         var controller = new CategoriesController(categoryService);
 
         // 先新增測試資料
@@ -213,7 +220,8 @@ public class CategoriesControllerTests : TestBase
     {
         // Arrange
         var categoryRepository = new CategoryRepository(Context);
-        var categoryService = new CategoryService(categoryRepository);
+        var productRepository = new ProductRepository(Context);
+        var categoryService = new CategoryService(categoryRepository, productRepository);
         var controller = new CategoriesController(categoryService);
 
         // Act
@@ -221,5 +229,46 @@ public class CategoriesControllerTests : TestBase
 
         // Assert
         result.Should().BeOfType<NotFoundResult>();
+    }
+
+    [Fact]
+    public async Task DeleteCategory_ShouldThrowException_WhenProductsExist()
+    {
+        // Arrange
+        var categoryRepository = new CategoryRepository(Context);
+        var productRepository = new ProductRepository(Context);
+        var categoryService = new CategoryService(categoryRepository, productRepository);
+        var controller = new CategoriesController(categoryService);
+
+        // 建立測試分類
+        var category = new Category
+        {
+            Name = "Electronics",
+            Description = "Electronic products",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Categories.Add(category);
+        await Context.SaveChangesAsync();
+
+        // 在該分類下建立商品
+        var product = new Product
+        {
+            Name = "iPhone 15",
+            Description = "Latest iPhone model",
+            Price = 999.99m,
+            Stock = 100,
+            CategoryId = category.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Products.Add(product);
+        await Context.SaveChangesAsync();
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => controller.Delete(category.Id));
+        exception.Message.Should().Contain("Cannot delete category");
+        exception.Message.Should().Contain("products exist");
+        exception.Message.Should().Contain("Electronics");
     }
 }
