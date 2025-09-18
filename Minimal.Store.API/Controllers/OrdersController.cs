@@ -33,6 +33,17 @@ public class OrdersController : ControllerBase
         return Ok(order);
     }
 
+    [HttpPut("{id}/status")]
+    public async Task<IActionResult> UpdateStatus(int id, UpdateOrderStatusDto dto)
+    {
+        var order = await _orderService.UpdateStatusAsync(id, dto);
+
+        if (order == null)
+            return NotFound();
+
+        return Ok(order);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(CreateOrderDto dto)
     {

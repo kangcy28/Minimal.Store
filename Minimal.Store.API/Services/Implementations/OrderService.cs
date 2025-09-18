@@ -123,4 +123,30 @@ public class OrderService : IOrderService
             }).ToList() ?? new List<OrderItemDto>()
         };
     }
+
+    public async Task<OrderDto?> UpdateStatusAsync(int id, UpdateOrderStatusDto dto)
+    {
+        var order = await _orderRepository.UpdateStatusAsync(id, dto.Status);
+
+        if (order == null)
+            return null;
+
+        return new OrderDto
+        {
+            Id = order.Id,
+            CustomerName = order.CustomerName,
+            CustomerEmail = order.CustomerEmail,
+            TotalAmount = order.TotalAmount,
+            Status = order.Status,
+            CreatedAt = order.CreatedAt,
+            OrderItems = order.OrderItems?.Select(oi => new OrderItemDto
+            {
+                Id = oi.Id,
+                ProductId = oi.ProductId,
+                ProductName = oi.Product?.Name ?? string.Empty,
+                Quantity = oi.Quantity,
+                UnitPrice = oi.UnitPrice
+            }).ToList() ?? new List<OrderItemDto>()
+        };
+    }
 }
