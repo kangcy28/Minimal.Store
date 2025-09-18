@@ -6,7 +6,7 @@
 [![Test-Driven Development](https://img.shields.io/badge/Development-TDD-green)](https://en.wikipedia.org/wiki/Test-driven_development)
 [![xUnit](https://img.shields.io/badge/Testing-xUnit-blue)](https://xunit.net/)
 
-一個使用 **.NET 8** 建構的倉儲 API，展示了 **分層式架構 (Clean Architecture)**、**TDD 測試驅動開發** 與 **商業邏輯驗證** 的實作。此專案強調專業開發實務，包括職責分離、測試覆蓋與錯誤處理。
+一個使用 **.NET 8** 建構的倉儲 API，展示了 **分層式架構**、**TDD 測試驅動開發** 與 **商業邏輯驗證** 的實作。此專案強調專業開發實務，包括職責分離、測試覆蓋與錯誤處理。
 
 ---
 
@@ -35,7 +35,7 @@ Minimal.Store.API/
 └── Extensions/          # DI 與系統設定
 
 Minimal.Store.Tests/
-└── Controllers/        # 控制器整合測試
+└── Controllers/        # 整合測試
 ```
 
 ---
