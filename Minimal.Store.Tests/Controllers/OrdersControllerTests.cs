@@ -157,4 +157,101 @@ public class OrdersControllerTests : TestBase
         exception.Message.Should().Contain("Insufficient stock");
         exception.Message.Should().Contain("iPhone 15");
     }
+
+    [Fact]
+    public async Task GetAll_ShouldReturnOrderList()
+    {
+        // Arrange
+        var orderRepository = new OrderRepository(Context);
+        var productRepository = new ProductRepository(Context);
+        var orderService = new OrderService(orderRepository, productRepository);
+        var controller = new OrdersController(orderService);
+
+        // 先新增測試分類
+        var category = new Category
+        {
+            Name = "Electronics",
+            Description = "Electronic products",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Categories.Add(category);
+        await Context.SaveChangesAsync();
+
+        // 新增測試商品
+        var product = new Product
+        {
+            Name = "iPhone 15",
+            Description = "Latest iPhone model",
+            Price = 999.99m,
+            Stock = 100,
+            CategoryId = category.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Products.Add(product);
+        await Context.SaveChangesAsync();
+
+        // 建立測試訂單
+        var order1 = new Order
+        {
+            CustomerName = "John Doe",
+            CustomerEmail = "john@example.com",
+            TotalAmount = 999.99m,
+            Status = "Pending",
+            CreatedAt = DateTime.UtcNow,
+            OrderItems = new List<OrderItem>
+            {
+                new OrderItem
+                {
+                    ProductId = product.Id,
+                    Quantity = 1,
+                    UnitPrice = 999.99m
+                }
+            }
+        };
+
+        var order2 = new Order
+        {
+            CustomerName = "Jane Smith",
+            CustomerEmail = "jane@example.com",
+            TotalAmount = 1999.98m,
+            Status = "Completed",
+            CreatedAt = DateTime.UtcNow.AddHours(-1),
+            OrderItems = new List<OrderItem>
+            {
+                new OrderItem
+                {
+                    ProductId = product.Id,
+                    Quantity = 2,
+                    UnitPrice = 999.99m
+                }
+            }
+        };
+
+        Context.Orders.AddRange(order1, order2);
+        await Context.SaveChangesAsync();
+
+        // Act
+        var result = await controller.GetAll();
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.StatusCode.Should().Be(200);
+
+        var orders = okResult.Value.Should().BeAssignableTo<IEnumerable<OrderDto>>().Subject.ToList();
+        orders.Should().HaveCount(2);
+
+        var firstOrder = orders.First();
+        firstOrder.CustomerName.Should().Be("John Doe");
+        firstOrder.CustomerEmail.Should().Be("john@example.com");
+        firstOrder.TotalAmount.Should().Be(999.99m);
+        firstOrder.Status.Should().Be("Pending");
+
+        var secondOrder = orders.Last();
+        secondOrder.CustomerName.Should().Be("Jane Smith");
+        secondOrder.CustomerEmail.Should().Be("jane@example.com");
+        secondOrder.TotalAmount.Should().Be(1999.98m);
+        secondOrder.Status.Should().Be("Completed");
+    }
 }

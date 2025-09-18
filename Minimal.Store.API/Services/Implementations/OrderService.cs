@@ -74,4 +74,27 @@ public class OrderService : IOrderService
             }).ToList()
         };
     }
+
+    public async Task<IEnumerable<OrderDto>> GetAllAsync()
+    {
+        var orders = await _orderRepository.GetAllAsync();
+
+        return orders.Select(order => new OrderDto
+        {
+            Id = order.Id,
+            CustomerName = order.CustomerName,
+            CustomerEmail = order.CustomerEmail,
+            TotalAmount = order.TotalAmount,
+            Status = order.Status,
+            CreatedAt = order.CreatedAt,
+            OrderItems = order.OrderItems?.Select(oi => new OrderItemDto
+            {
+                Id = oi.Id,
+                ProductId = oi.ProductId,
+                ProductName = oi.Product?.Name ?? string.Empty,
+                Quantity = oi.Quantity,
+                UnitPrice = oi.UnitPrice
+            }).ToList() ?? new List<OrderItemDto>()
+        });
+    }
 }

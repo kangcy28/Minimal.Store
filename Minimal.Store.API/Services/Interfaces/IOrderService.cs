@@ -5,4 +5,5 @@ namespace Minimal.Store.API.Services.Interfaces;
 public interface IOrderService
 {
     Task<OrderDto> CreateAsync(CreateOrderDto dto);
+    Task<IEnumerable<OrderDto>> GetAllAsync();
 }
