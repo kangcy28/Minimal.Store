@@ -159,6 +159,132 @@ public class OrdersControllerTests : TestBase
     }
 
     [Fact]
+    public async Task CreateOrder_ShouldThrowException_WhenProductIsCompletelyOutOfStock()
+    {
+        // Arrange
+        var orderRepository = new OrderRepository(Context);
+        var productRepository = new ProductRepository(Context);
+        var orderService = new OrderService(orderRepository, productRepository);
+        var controller = new OrdersController(orderService);
+
+        // 先新增測試分類
+        var category = new Category
+        {
+            Name = "Electronics",
+            Description = "Electronic products",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Categories.Add(category);
+        await Context.SaveChangesAsync();
+
+        // 新增測試商品 - 庫存為 0（完全沒有庫存）
+        var product = new Product
+        {
+            Name = "MacBook Pro",
+            Description = "Professional laptop",
+            Price = 2499.99m,
+            Stock = 0, // 庫存為 0
+            CategoryId = category.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Products.Add(product);
+        await Context.SaveChangesAsync();
+
+        var createOrderDto = new CreateOrderDto
+        {
+            CustomerName = "Jane Smith",
+            CustomerEmail = "jane@example.com",
+            OrderItems = new List<CreateOrderItemDto>
+            {
+                new CreateOrderItemDto
+                {
+                    ProductId = product.Id,
+                    Quantity = 1 // 要求 1 個，但庫存為 0
+                }
+            }
+        };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => controller.Create(createOrderDto));
+        exception.Message.Should().Contain("Insufficient stock");
+        exception.Message.Should().Contain("MacBook Pro");
+        exception.Message.Should().Contain("Available: 0");
+        exception.Message.Should().Contain("Requested: 1");
+    }
+
+    [Fact]
+    public async Task CreateOrder_ShouldThrowException_WhenMultipleProductsHaveInsufficientStock()
+    {
+        // Arrange
+        var orderRepository = new OrderRepository(Context);
+        var productRepository = new ProductRepository(Context);
+        var orderService = new OrderService(orderRepository, productRepository);
+        var controller = new OrdersController(orderService);
+
+        // 先新增測試分類
+        var category = new Category
+        {
+            Name = "Electronics",
+            Description = "Electronic products",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Categories.Add(category);
+        await Context.SaveChangesAsync();
+
+        // 新增第一個測試商品 - 庫存足夠
+        var product1 = new Product
+        {
+            Name = "iPhone 15",
+            Description = "Latest iPhone model",
+            Price = 999.99m,
+            Stock = 10, // 庫存足夠
+            CategoryId = category.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        // 新增第二個測試商品 - 庫存不足
+        var product2 = new Product
+        {
+            Name = "iPad Pro",
+            Description = "Professional tablet",
+            Price = 799.99m,
+            Stock = 1, // 庫存只有 1 個
+            CategoryId = category.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Products.AddRange(product1, product2);
+        await Context.SaveChangesAsync();
+
+        var createOrderDto = new CreateOrderDto
+        {
+            CustomerName = "John Doe",
+            CustomerEmail = "john@example.com",
+            OrderItems = new List<CreateOrderItemDto>
+            {
+                new CreateOrderItemDto
+                {
+                    ProductId = product1.Id,
+                    Quantity = 1 // 這個沒問題
+                },
+                new CreateOrderItemDto
+                {
+                    ProductId = product2.Id,
+                    Quantity = 3 // 要求 3 個，但庫存只有 1 個
+                }
+            }
+        };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => controller.Create(createOrderDto));
+        exception.Message.Should().Contain("Insufficient stock");
+        exception.Message.Should().Contain("iPad Pro");
+    }
+
+    [Fact]
     public async Task GetAll_ShouldReturnOrderList()
     {
         // Arrange
