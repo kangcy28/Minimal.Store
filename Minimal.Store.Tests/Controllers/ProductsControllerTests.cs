@@ -422,4 +422,84 @@ public class ProductsControllerTests : TestBase
         var exception = await Assert.ThrowsAsync<ArgumentException>(() => controller.Update(product.Id, updateProductDto));
         exception.Message.Should().Contain("Price cannot be negative");
     }
+
+    [Fact]
+    public async Task CreateProduct_ShouldThrowException_WhenStockIsNegative()
+    {
+        // Arrange
+        var productRepository = new ProductRepository(Context);
+        var productService = new ProductService(productRepository);
+        var controller = new ProductsController(productService);
+
+        // 先新增測試分類
+        var category = new Category
+        {
+            Name = "Electronics",
+            Description = "Electronic products",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Categories.Add(category);
+        await Context.SaveChangesAsync();
+
+        var createProductDto = new CreateProductDto
+        {
+            Name = "Test Product",
+            Description = "Test product description",
+            Price = 99.99m,
+            Stock = -10, // 負數庫存
+            CategoryId = category.Id
+        };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => controller.Create(createProductDto));
+        exception.Message.Should().Contain("Stock cannot be negative");
+    }
+
+    [Fact]
+    public async Task UpdateProduct_ShouldThrowException_WhenStockIsNegative()
+    {
+        // Arrange
+        var productRepository = new ProductRepository(Context);
+        var productService = new ProductService(productRepository);
+        var controller = new ProductsController(productService);
+
+        // 先新增測試分類
+        var category = new Category
+        {
+            Name = "Electronics",
+            Description = "Electronic products",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Categories.Add(category);
+        await Context.SaveChangesAsync();
+
+        // 新增測試商品
+        var product = new Product
+        {
+            Name = "iPhone 15",
+            Description = "Latest iPhone model",
+            Price = 999.99m,
+            Stock = 100,
+            CategoryId = category.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Products.Add(product);
+        await Context.SaveChangesAsync();
+
+        var updateProductDto = new UpdateProductDto
+        {
+            Name = "iPhone 15 Pro",
+            Description = "Updated iPhone model",
+            Price = 1299.99m,
+            Stock = -5, // 負數庫存
+            CategoryId = category.Id
+        };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => controller.Update(product.Id, updateProductDto));
+        exception.Message.Should().Contain("Stock cannot be negative");
+    }
 }
