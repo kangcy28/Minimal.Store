@@ -53,6 +53,10 @@ public class ProductService : IProductService
 
     public async Task<ProductDto?> UpdateAsync(int id, UpdateProductDto dto)
     {
+        // 驗證價格不能為負數
+        if (dto.Price < 0)
+            throw new ArgumentException("Price cannot be negative.");
+
         var product = new Product
         {
             Id = id,
@@ -88,6 +92,10 @@ public class ProductService : IProductService
 
     public async Task<ProductDto> CreateAsync(CreateProductDto dto)
     {
+        // 驗證價格不能為負數
+        if (dto.Price < 0)
+            throw new ArgumentException("Price cannot be negative.");
+
         var product = new Product
         {
             Name = dto.Name,
