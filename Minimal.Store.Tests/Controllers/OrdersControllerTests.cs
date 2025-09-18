@@ -373,4 +373,107 @@ public class OrdersControllerTests : TestBase
         // Assert
         result.Should().BeOfType<NotFoundResult>();
     }
+
+    [Fact]
+    public async Task UpdateStatus_ShouldUpdateOrderStatus()
+    {
+        // Arrange
+        var orderRepository = new OrderRepository(Context);
+        var productRepository = new ProductRepository(Context);
+        var orderService = new OrderService(orderRepository, productRepository);
+        var controller = new OrdersController(orderService);
+
+        // 先新增測試分類
+        var category = new Category
+        {
+            Name = "Electronics",
+            Description = "Electronic products",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Categories.Add(category);
+        await Context.SaveChangesAsync();
+
+        // 新增測試商品
+        var product = new Product
+        {
+            Name = "iPhone 15",
+            Description = "Latest iPhone model",
+            Price = 999.99m,
+            Stock = 100,
+            CategoryId = category.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Products.Add(product);
+        await Context.SaveChangesAsync();
+
+        // 建立測試訂單
+        var order = new Order
+        {
+            CustomerName = "John Doe",
+            CustomerEmail = "john@example.com",
+            TotalAmount = 999.99m,
+            Status = "Pending",
+            CreatedAt = DateTime.UtcNow,
+            OrderItems = new List<OrderItem>
+            {
+                new OrderItem
+                {
+                    ProductId = product.Id,
+                    Quantity = 1,
+                    UnitPrice = 999.99m
+                }
+            }
+        };
+
+        Context.Orders.Add(order);
+        await Context.SaveChangesAsync();
+
+        var updateStatusDto = new UpdateOrderStatusDto
+        {
+            Status = "Completed"
+        };
+
+        // Act
+        var result = await controller.UpdateStatus(order.Id, updateStatusDto);
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.StatusCode.Should().Be(200);
+
+        var updatedOrderDto = okResult.Value.Should().BeOfType<OrderDto>().Subject;
+        updatedOrderDto.Id.Should().Be(order.Id);
+        updatedOrderDto.Status.Should().Be("Completed");
+        updatedOrderDto.CustomerName.Should().Be("John Doe");
+        updatedOrderDto.CustomerEmail.Should().Be("john@example.com");
+        updatedOrderDto.TotalAmount.Should().Be(999.99m);
+
+        // 驗證資料庫中的狀態也已更新
+        var updatedOrderInDb = await Context.Orders.FindAsync(order.Id);
+        updatedOrderInDb.Should().NotBeNull();
+        updatedOrderInDb!.Status.Should().Be("Completed");
+    }
+
+    [Fact]
+    public async Task UpdateStatus_ShouldReturnNotFound_WhenOrderDoesNotExist()
+    {
+        // Arrange
+        var orderRepository = new OrderRepository(Context);
+        var productRepository = new ProductRepository(Context);
+        var orderService = new OrderService(orderRepository, productRepository);
+        var controller = new OrdersController(orderService);
+
+        var nonExistentOrderId = 999;
+        var updateStatusDto = new UpdateOrderStatusDto
+        {
+            Status = "Completed"
+        };
+
+        // Act
+        var result = await controller.UpdateStatus(nonExistentOrderId, updateStatusDto);
+
+        // Assert
+        result.Should().BeOfType<NotFoundResult>();
+    }
 }

@@ -44,4 +44,20 @@ public class OrderRepository : IOrderRepository
             .ThenInclude(oi => oi.Product)
             .FirstOrDefaultAsync(o => o.Id == id);
     }
+
+    public async Task<Order?> UpdateStatusAsync(int id, string status)
+    {
+        var order = await _context.Orders
+            .Include(o => o.OrderItems)
+            .ThenInclude(oi => oi.Product)
+            .FirstOrDefaultAsync(o => o.Id == id);
+
+        if (order == null)
+            return null;
+
+        order.Status = status;
+        await _context.SaveChangesAsync();
+
+        return order;
+    }
 }
