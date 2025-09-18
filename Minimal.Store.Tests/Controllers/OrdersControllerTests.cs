@@ -254,4 +254,123 @@ public class OrdersControllerTests : TestBase
         secondOrder.TotalAmount.Should().Be(1999.98m);
         secondOrder.Status.Should().Be("Completed");
     }
+
+    [Fact]
+    public async Task GetById_ShouldReturnOrderWithProductDetails()
+    {
+        // Arrange
+        var orderRepository = new OrderRepository(Context);
+        var productRepository = new ProductRepository(Context);
+        var orderService = new OrderService(orderRepository, productRepository);
+        var controller = new OrdersController(orderService);
+
+        // 先新增測試分類
+        var category = new Category
+        {
+            Name = "Electronics",
+            Description = "Electronic products",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Categories.Add(category);
+        await Context.SaveChangesAsync();
+
+        // 新增測試商品
+        var product1 = new Product
+        {
+            Name = "iPhone 15",
+            Description = "Latest iPhone model",
+            Price = 999.99m,
+            Stock = 100,
+            CategoryId = category.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var product2 = new Product
+        {
+            Name = "iPad Pro",
+            Description = "Professional tablet",
+            Price = 799.99m,
+            Stock = 50,
+            CategoryId = category.Id,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Context.Products.AddRange(product1, product2);
+        await Context.SaveChangesAsync();
+
+        // 建立測試訂單
+        var order = new Order
+        {
+            CustomerName = "John Doe",
+            CustomerEmail = "john@example.com",
+            TotalAmount = 2799.97m,
+            Status = "Pending",
+            CreatedAt = DateTime.UtcNow,
+            OrderItems = new List<OrderItem>
+            {
+                new OrderItem
+                {
+                    ProductId = product1.Id,
+                    Quantity = 2,
+                    UnitPrice = 999.99m
+                },
+                new OrderItem
+                {
+                    ProductId = product2.Id,
+                    Quantity = 1,
+                    UnitPrice = 799.99m
+                }
+            }
+        };
+
+        Context.Orders.Add(order);
+        await Context.SaveChangesAsync();
+
+        // Act
+        var result = await controller.GetById(order.Id);
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.StatusCode.Should().Be(200);
+
+        var orderDto = okResult.Value.Should().BeOfType<OrderDto>().Subject;
+        orderDto.Id.Should().Be(order.Id);
+        orderDto.CustomerName.Should().Be("John Doe");
+        orderDto.CustomerEmail.Should().Be("john@example.com");
+        orderDto.TotalAmount.Should().Be(2799.97m);
+        orderDto.Status.Should().Be("Pending");
+
+        orderDto.OrderItems.Should().HaveCount(2);
+
+        var orderItem1 = orderDto.OrderItems.First(oi => oi.ProductId == product1.Id);
+        orderItem1.ProductName.Should().Be("iPhone 15");
+        orderItem1.Quantity.Should().Be(2);
+        orderItem1.UnitPrice.Should().Be(999.99m);
+
+        var orderItem2 = orderDto.OrderItems.First(oi => oi.ProductId == product2.Id);
+        orderItem2.ProductName.Should().Be("iPad Pro");
+        orderItem2.Quantity.Should().Be(1);
+        orderItem2.UnitPrice.Should().Be(799.99m);
+
+        orderDto.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public async Task GetById_ShouldReturnNotFound_WhenOrderDoesNotExist()
+    {
+        // Arrange
+        var orderRepository = new OrderRepository(Context);
+        var productRepository = new ProductRepository(Context);
+        var orderService = new OrderService(orderRepository, productRepository);
+        var controller = new OrdersController(orderService);
+
+        var nonExistentOrderId = 999;
+
+        // Act
+        var result = await controller.GetById(nonExistentOrderId);
+
+        // Assert
+        result.Should().BeOfType<NotFoundResult>();
+    }
 }

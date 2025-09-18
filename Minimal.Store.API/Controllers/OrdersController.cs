@@ -22,6 +22,17 @@ public class OrdersController : ControllerBase
         return Ok(orders);
     }
 
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var order = await _orderService.GetByIdAsync(id);
+
+        if (order == null)
+            return NotFound();
+
+        return Ok(order);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(CreateOrderDto dto)
     {
