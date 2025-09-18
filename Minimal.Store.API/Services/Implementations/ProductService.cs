@@ -57,6 +57,10 @@ public class ProductService : IProductService
         if (dto.Price < 0)
             throw new ArgumentException("Price cannot be negative.");
 
+        // 驗證庫存不能為負數
+        if (dto.Stock < 0)
+            throw new ArgumentException("Stock cannot be negative.");
+
         var product = new Product
         {
             Id = id,
@@ -95,6 +99,10 @@ public class ProductService : IProductService
         // 驗證價格不能為負數
         if (dto.Price < 0)
             throw new ArgumentException("Price cannot be negative.");
+
+        // 驗證庫存不能為負數
+        if (dto.Stock < 0)
+            throw new ArgumentException("Stock cannot be negative.");
 
         var product = new Product
         {
