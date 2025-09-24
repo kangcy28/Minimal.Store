@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Minimal.Store.API.Models.DTOs;
 using Minimal.Store.API.Services.Interfaces;
@@ -34,6 +35,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<IActionResult> Update(int id, UpdateProductDto dto)
     {
         var updatedProduct = await _productService.UpdateAsync(id, dto);
@@ -45,6 +47,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _productService.DeleteAsync(id);
@@ -56,6 +59,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize]
     public async Task<IActionResult> Create(CreateProductDto dto)
     {
         var productDto = await _productService.CreateAsync(dto);
