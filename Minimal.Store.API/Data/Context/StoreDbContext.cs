@@ -14,6 +14,7 @@ public class StoreDbContext : DbContext
     public DbSet<Order> Orders { get; set; }
     public DbSet<OrderItem> OrderItems { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -45,5 +46,10 @@ public class StoreDbContext : DbContext
         modelBuilder.Entity<OrderItem>()
             .Property(oi => oi.UnitPrice)
             .HasPrecision(18, 2);
+
+        modelBuilder.Entity<RefreshToken>()
+            .HasOne(rt => rt.User)
+            .WithMany(u => u.RefreshTokens)
+            .HasForeignKey(rt => rt.UserId);
     }
 }
